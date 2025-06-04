@@ -383,6 +383,21 @@ class DoencaFamiliar(models.Model):
         ('outros', 'Outros'),
     ]
     
-    paciente = models.ForeignKey(Paciente, on_delete=models.CASCADE, related_name='doencas_familiares')
+    paciente = models.ForeignKey(
+        Paciente,
+        on_delete=models.CASCADE,
+        related_name='doencas_familiares'
+    )
     doenca = models.CharField(max_length=100)
     parentesco = models.CharField(max_length=15, choices=PARENTESCO_CHOICES)
+    idade_diagnostico = models.PositiveIntegerField(null=True, blank=True)
+    observacoes = models.TextField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Doença Familiar"
+        verbose_name_plural = "Doenças Familiares"
+
+    def __str__(self):
+        return f"{self.paciente.nome_completo} - {self.doenca} ({self.get_parentesco_display()})"
