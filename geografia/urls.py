@@ -13,6 +13,7 @@ Data: 2025
 """
 
 from django.urls import path
+from rest_framework.routers import DefaultRouter
 from .views import (
     # Regiões
     RegiaoListCreateView,
@@ -40,6 +41,11 @@ from .views import (
     PesquisaGeograficaView,
     ExportacaoGeografiaView,
 )
+from .viewsets import CidadeViewSet, TabancaViewSet
+
+router = DefaultRouter()
+router.register('crud/cidades', CidadeViewSet, basename='crud-cidades')
+router.register('crud/tabancas', TabancaViewSet, basename='crud-tabancas')
 
 app_name = 'geografia'
 
@@ -92,3 +98,5 @@ urlpatterns = [
     # Exportação de dados por região
     path('exportar/<int:regiao_id>/', ExportacaoGeografiaView.as_view(), name='exportacao'),
 ]
+
+urlpatterns += router.urls
