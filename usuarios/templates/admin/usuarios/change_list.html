@@ -1,0 +1,20 @@
+<!-- templates/admin/usuarios/change_list.html -->
+{% extends "admin/change_list.html" %}
+{% load i18n admin_urls static admin_list %}
+
+{% block content_title %}
+    {{ block.super }}
+    {% if custom_buttons %}
+        <div style="float: right; margin-top: -30px;">
+            {% for button in custom_buttons %}
+                <a href="{{ button.url }}" class="button {{ button.class }}" style="margin-left: 5px;">
+                    {{ button.icon }} {{ button.title }}
+                </a>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}
+
+
+
+

@@ -1,0 +1,51 @@
+
+<!-- templates/admin/usuarios/configuracoes.html -->
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+    &rsaquo; <a href="{% url 'admin:usuarios_usuario_changelist' %}">Usuários</a>
+    &rsaquo; {{ title }}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="module">
+    <h1>⚙️ {{ title }}</h1>
+    
+    <form method="post" style="background: #f8f9fa; padding: 20px; border-radius: 5px;">
+        {% csrf_token %}
+        
+        <fieldset class="module aligned">
+            <h2>Configurações de Segurança</h2>
+            
+            <div class="form-row">
+                <div>
+                    <label for="max_login_attempts">Máximo de tentativas de login:</label>
+                    <input type="number" id="max_login_attempts" name="max_login_attempts" value="5" min="1" max="10">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div>
+                    <label for="session_timeout">Timeout de sessão (minutos):</label>
+                    <input type="number" id="session_timeout" name="session_timeout" value="30" min="5" max="120">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div>
+                    <label for="require_2fa">Exigir 2FA para admins:</label>
+                    <input type="checkbox" id="require_2fa" name="require_2fa">
+                </div>
+            </div>
+        </fieldset>
+        
+        <fieldset class="module aligned">
+            <h2>Configurações de Notificação</h2>
+        </fieldset>
+{% endblock content %}

@@ -1,0 +1,66 @@
+<!-- templates/admin/usuarios/dispositivos.html -->
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+    &rsaquo; <a href="{% url 'admin:usuarios_usuario_changelist' %}">Usuários</a>
+    &rsaquo; {{ title }}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="module">
+    <h1>📱 {{ title }}</h1>
+    
+    <div class="results">
+        <table id="result_list">
+            <thead>
+                <tr>
+                    <th>Usuário</th>
+                    <th>Último IP</th>
+                    <th>Último Login</th>
+                    <th>2FA Ativo</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for info in dispositivos_info %}
+                <tr>
+                    <td>{{ info.usuario.email }}</td>
+                    <td>{{ info.ultimo_ip }}</td>
+                    <td>{{ info.ultimo_login|date:"d/m/Y H:i" }}</td>
+                    <td>
+                        {% if info.two_factor %}
+                            <span style="color: green;">✅ Sim</span>
+                        {% else %}
+                            <span style="color: red;">❌ Não</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if info.usuario.is_active %}
+                            <span style="color: green;">🟢 Online</span>
+                        {% else %}
+                            <span style="color: gray;">⚫ Offline</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5">Nenhum usuário conectado nas últimas 24 horas.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <div style="margin-top: 20px;">
+        <a href="{% url 'admin:usuarios_usuario_changelist' %}" class="button default">
+            ← Voltar para Lista de Usuários
+        </a>
+    </div>
+</div>
+{% endblock %}

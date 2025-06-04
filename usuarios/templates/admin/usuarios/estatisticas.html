@@ -1,0 +1,698 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}Estatísticas de Usuários | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+    › <a href="#" onclick="history.back()">Usuários</a>
+    › Estatísticas de Usuários
+</div>
+{% endblock %}
+
+{% block extrastyle %}
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+    :root {
+        --primary: #6366f1;
+        --secondary: #a855f7;
+        --accent: #22d3ee;
+        --background: #f8fafc;
+        --card-bg: #ffffff;
+        --text-primary: #111827;
+        --text-secondary: #4b5563;
+        --border: #e2e8f0;
+        --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        box-sizing: border-box;
+    }
+
+    .stats-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2.5rem;
+        background: linear-gradient(to bottom, var(--background), #e2e8f0);
+        min-height: 100vh;
+        animation: fadeIn 0.5s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .stats-header {
+        text-align: center;
+        margin-bottom: 3.5rem;
+        font-size: 2.75rem;
+        font-weight: 700;
+        background: linear-gradient(to right, var(--primary), var(--secondary));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        position: relative;
+        animation: slideIn 0.5s ease-out;
+    }
+
+    .stats-header::after {
+        content: '';
+        position: absolute;
+        bottom: -0.5rem;
+        left: 50%;
+        width: 100px;
+        height: 4px;
+        background: linear-gradient(to right, var(--primary), var(--secondary));
+        transform: translateX(-50%);
+        border-radius: 2px;
+    }
+
+    @keyframes slideIn {
+        from { opacity: 0; transform: translateY(-20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .cards-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+        gap: 2rem;
+        margin: 2.5rem 0;
+    }
+
+    .stats-card {
+        background: var(--card-bg);
+        border-radius: 1.25rem;
+        box-shadow: var(--shadow);
+        padding: 2.5rem;
+        border: 1px solid var(--border);
+        position: relative;
+        overflow: hidden;
+        transition: var(--transition);
+        animation: cardFadeIn 0.6s ease-out forwards;
+        animation-delay: calc(var(--order) * 0.1s);
+    }
+
+    .stats-card:nth-child(1) { --order: 1; }
+    .stats-card:nth-child(2) { --order: 2; }
+
+    @keyframes cardFadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .stats-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 6px;
+        background: linear-gradient(to right, var(--primary), var(--accent));
+        border-radius: 1.25rem 1.25rem 0 0;
+    }
+
+    .stats-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+    }
+
+    .card-title {
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .card-title::before {
+        content: '';
+        width: 1.75rem;
+        height: 1.75rem;
+        background: linear-gradient(to bottom right, var(--primary), var(--accent));
+        border-radius: 50%;
+        flex-shrink: 0;
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    }
+
+    .stats-numbers {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1.25rem;
+        margin: 2rem 0;
+    }
+
+    .stat-item {
+        text-align: center;
+        padding: 1.5rem;
+        background: linear-gradient(145deg, rgba(99, 102, 241, 0.05), rgba(168, 85, 247, 0.05));
+        border-radius: 1rem;
+        border: 1px solid var(--border);
+        transition: var(--transition);
+    }
+
+    .stat-item:hover {
+        background: linear-gradient(145deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1));
+        transform: scale(1.02);
+    }
+
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--primary);
+        display: block;
+        line-height: 1.2;
+        transition: var(--transition);
+    }
+
+    .stat-label {
+        font-size: 1rem;
+        color: var(--text-secondary);
+        margin-top: 0.75rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .chart-container {
+        position: relative;
+        height: 400px;
+        margin: 2rem 0;
+        padding: 1.5rem;
+        background: var(--card-bg);
+        border-radius: 1rem;
+        box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .back-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        background: linear-gradient(to right, var(--primary), var(--accent));
+        color: white;
+        padding: 1rem 2rem;
+        border-radius: 0.75rem;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 1.1rem;
+        transition: var(--transition);
+        border: none;
+        cursor: pointer;
+        box-shadow: var(--shadow);
+    }
+
+    .back-button:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 24px rgba(99, 102, 241, 0.3);
+        background: linear-gradient(to right, var(--accent), var(--primary));
+    }
+
+    .back-button::before {
+        content: '←';
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+
+    .loading-spinner {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 250px;
+        color: var(--primary);
+        font-size: 1.2rem;
+        font-weight: 500;
+    }
+
+    .spinner {
+        width: 3.5rem;
+        height: 3.5rem;
+        border: 6px solid var(--border);
+        border-top: 6px solid var(--primary);
+        border-radius: 50%;
+        animation: spin 0.7s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        margin-right: 1.25rem;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .error-message {
+        text-align: center;
+        color: #ef4444;
+        padding: 2rem;
+        background: rgba(239, 68, 68, 0.05);
+        border-radius: 1rem;
+        margin: 2rem 0;
+        font-weight: 500;
+        border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .language-stats-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        margin: 2rem 0;
+        background: var(--card-bg);
+        border-radius: 1rem;
+        overflow: hidden;
+        box-shadow: var(--shadow);
+    }
+
+    .language-stats-table th,
+    .language-stats-table td {
+        padding: 1.25rem;
+        text-align: left;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .language-stats-table th {
+        background: linear-gradient(to bottom, var(--card-bg), rgba(99, 102, 241, 0.05));
+        font-weight: 600;
+        color: var(--text-primary);
+        text-transform: uppercase;
+        font-size: 0.95rem;
+        letter-spacing: 0.1em;
+    }
+
+    .language-stats-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .language-stats-table tr:hover {
+        background: rgba(99, 102, 241, 0.1);
+    }
+
+    .percentage-bar {
+        background: var(--border);
+        height: 12px;
+        border-radius: 6px;
+        overflow: hidden;
+        margin-top: 0.75rem;
+    }
+
+    .percentage-fill {
+        height: 100%;
+        background: linear-gradient(to right, var(--primary), var(--accent));
+        border-radius: 6px;
+        transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 0 8px rgba(99, 102, 241, 0.3);
+    }
+
+    @media (max-width: 768px) {
+        .stats-container {
+            padding: 1.5rem;
+        }
+
+        .cards-grid {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        .stats-card {
+            padding: 2rem;
+        }
+
+        .chart-container {
+            height: 320px;
+        }
+
+        .stats-numbers {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .stats-header {
+            font-size: 2.25rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .stats-numbers {
+            grid-template-columns: 1fr;
+        }
+
+        .stats-header {
+            font-size: 1.875rem;
+        }
+
+        .chart-container {
+            height: 280px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="stats-container">
+    <h1 class="stats-header">📊 Estatísticas de Usuários</h1>
+    
+    <!-- Estatísticas Numéricas -->
+    <div class="stats-card">
+        <h3 class="card-title">Resumo Geral</h3>
+        <div class="stats-numbers">
+            <div class="stat-item">
+                <span class="stat-number">{{ total_usuarios|default:0 }}</span>
+                <div class="stat-label">Total de Usuários</div>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">{{ usuarios_ativos|default:0 }}</span>
+                <div class="stat-label">Usuários Ativos</div>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">{{ usuarios_bloqueados|default:0 }}</span>
+                <div class="stat-label">Usuários Bloqueados</div>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">{{ novos_usuarios|default:0 }}</span>
+                <div class="stat-label">Novos (30 dias)</div>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">{{ logins_recentes|default:0 }}</span>
+                <div class="stat-label">Logins Recentes</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="cards-grid">
+        <!-- Cartão de Estatísticas Gerais -->
+        <div class="stats-card">
+            <h3 class="card-title">Estatísticas Gerais</h3>
+            <div class="chart-container">
+                <div class="loading-spinner" id="barChartLoading">
+                    <div class="spinner"></div>
+                    Carregando gráfico...
+                </div>
+                <canvas id="barChart" style="display: none;"></canvas>
+            </div>
+        </div>
+        
+        <!-- Cartão de Distribuição por Idioma -->
+        <div class="stats-card">
+            <h3 class="card-title">Distribuição por Idioma</h3>
+            
+            {% if stats_idioma %}
+                <!-- Tabela de estatísticas por idioma -->
+                <table class="language-stats-table">
+                    <thead>
+                        <tr>
+                            <th>Idioma</th>
+                            <th>Quantidade</th>
+                            <th>Percentual</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stat in stats_idioma %}
+                            <tr>
+                                <td>
+                                    {% if stat.idioma_preferido %}
+                                        {{ stat.idioma_preferido|capfirst }}
+                                    {% else %}
+                                        Não definido
+                                    {% endif %}
+                                </td>
+                                <td>{{ stat.count }}</td>
+                                <td>
+                                    {% if total_usuarios > 0 %}
+                                        {% widthratio stat.count total_usuarios 100 as percentage %}
+                                        {{ percentage }}%
+                                        <div class="percentage-bar">
+                                            <div class="percentage-fill" style="width: {{ percentage }}%;"></div>
+                                        </div>
+                                    {% else %}
+                                        0%
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                
+                <!-- Gráfico de pizza -->
+                <div class="chart-container">
+                    <div class="loading-spinner" id="pieChartLoading">
+                        <div class="spinner"></div>
+                        Carregando gráfico...
+                    </div>
+                    <canvas id="pieChart" style="display: none;"></canvas>
+                </div>
+            {% else %}
+                <div class="error-message">
+                    Nenhum dado de idioma disponível
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div style="margin-top: 4rem; text-align: center;">
+        <a href="javascript:history.back()" class="back-button">
+            Voltar
+        </a>
+    </div>
+</div>
+
+<!-- Dados para JavaScript usando dados serializados manualmente -->
+<script id="chart-data" type="application/json">
+{
+    "total_usuarios": {{ total_usuarios|default:0 }},
+    "usuarios_ativos": {{ usuarios_ativos|default:0 }},
+    "usuarios_bloqueados": {{ usuarios_bloqueados|default:0 }},
+    "novos_usuarios": {{ novos_usuarios|default:0 }},
+    "logins_recentes": {{ logins_recentes|default:0 }},
+    "language_stats": [
+        {% for stat in stats_idioma %}
+            {
+                "idioma": "{% if stat.idioma_preferido %}{{ stat.idioma_preferido|escapejs }}{% else %}Não definido{% endif %}",
+                "count": {{ stat.count|default:0 }}
+            }{% if not forloop.last %},{% endif %}
+        {% empty %}
+        {% endfor %}
+    ]
+}
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Função para verificar se Chart.js foi carregado
+    if (typeof Chart === 'undefined') {
+        console.error('Chart.js não foi carregado');
+        document.getElementById('barChartLoading').innerHTML = '<div class="error-message">Erro ao carregar biblioteca de gráficos</div>';
+        document.getElementById('pieChartLoading').innerHTML = '<div class="error-message">Erro ao carregar biblioteca de gráficos</div>';
+        return;
+    }
+
+    // Obter dados do Django de forma segura
+    const chartData = JSON.parse(document.getElementById('chart-data').textContent);
+
+    // Extrair valores dos dados
+    const totalUsuarios = chartData.total_usuarios || 0;
+    const usuariosAtivos = chartData.usuarios_ativos || 0;
+    const usuariosBloqueados = chartData.usuarios_bloqueados || 0;
+    const novosUsuarios = chartData.novos_usuarios || 0;
+    const loginsRecentes = chartData.logins_recentes || 0;
+    const languageStats = chartData.language_stats || [];
+
+    const barData = {
+        labels: ['Total', 'Ativos', 'Bloqueados', 'Novos (30d)', 'Logins Recentes'],
+        datasets: [{
+            label: 'Quantidade',
+            data: [totalUsuarios, usuariosAtivos, usuariosBloqueados, novosUsuarios, loginsRecentes],
+            backgroundColor: [
+                'rgba(99, 102, 241, 0.85)',
+                'rgba(34, 211, 238, 0.85)',
+                'rgba(239, 68, 68, 0.85)',
+                'rgba(168, 85, 247, 0.85)',
+                'rgba(59, 130, 246, 0.85)'
+            ],
+            borderColor: [
+                'rgba(99, 102, 241, 1)',
+                'rgba(34, 211, 238, 1)',
+                'rgba(239, 68, 68, 1)',
+                'rgba(168, 85, 247, 1)',
+                'rgba(59, 130, 246, 1)'
+            ],
+            borderWidth: 2,
+            borderRadius: 12,
+            borderSkipped: false,
+        }]
+    };
+
+    const barConfig = {
+        type: 'bar',
+        data: barData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(17, 24, 39, 0.95)',
+                    titleColor: 'white',
+                    bodyColor: 'white',
+                    borderColor: 'rgba(255, 255, 255, 0.2)',
+                    borderWidth: 1,
+                    cornerRadius: 12,
+                    displayColors: false,
+                    padding: 14,
+                    titleFont: { size: 15, weight: '600' },
+                    bodyFont: { size: 13 }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)',
+                        lineWidth: 1
+                    },
+                    ticks: {
+                        color: 'var(--text-secondary)',
+                        font: {
+                            size: 14,
+                            weight: '500'
+                        },
+                        stepSize: 1
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        color: 'var(--text-secondary)',
+                        font: {
+                            size: 13,
+                            weight: '500'
+                        },
+                        maxRotation: 45
+                    }
+                }
+            },
+            animation: {
+                duration: 1000,
+                easing: 'easeOutCubic',
+                onComplete: function() {
+                    this.options.animation.duration = 0;
+                }
+            }
+        }
+    };
+
+    const pieColors = [
+        'rgba(99, 102, 241, 0.85)',
+        'rgba(34, 211, 238, 0.85)',
+        'rgba(239, 68, 68, 0.85)',
+        'rgba(168, 85, 247, 0.85)',
+        'rgba(59, 130, 246, 0.85)',
+        'rgba(234, 179, 8, 0.85)',
+        'rgba(236, 72, 153, 0.85)',
+        'rgba(75, 85, 99, 0.85)'
+    ];
+
+    let pieLabels = [];
+    let pieDataValues = [];
+
+    if (languageStats && languageStats.length > 0) {
+        languageStats.forEach(item => {
+            pieLabels.push(item.idioma || 'Não definido');
+            pieDataValues.push(item.count || 0);
+        });
+    } else {
+        document.getElementById('pieChartLoading').style.display = 'none';
+        const pieContainer = document.getElementById('pieChart').parentElement;
+        pieContainer.innerHTML = '<div class="error-message">Nenhum dado de idioma disponível para o gráfico</div>';
+    }
+
+    setTimeout(() => {
+        try {
+            document.getElementById('barChartLoading').style.display = 'none';
+            document.getElementById('barChart').style.display = 'block';
+            new Chart(document.getElementById('barChart'), barConfig);
+        } catch (error) {
+            console.error('Erro ao criar gráfico de barras:', error);
+            document.getElementById('barChartLoading').innerHTML = '<div class="error-message">Erro ao carregar gráfico de barras</div>';
+        }
+    }, 300);
+
+    if (pieLabels.length > 0) {
+        const pieData = {
+            labels: pieLabels,
+            datasets: [{
+                data: pieDataValues,
+                backgroundColor: pieColors.slice(0, pieLabels.length),
+                borderColor: pieColors.map(color => color.replace('0.85', '1')).slice(0, pieLabels.length),
+                borderWidth: 2,
+                hoverOffset: 30
+            }]
+        };
+
+        const pieConfig = {
+            type: 'pie',
+            data: pieData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 30,
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            color: 'var(--text-secondary)',
+                            font: {
+                                size: 14,
+                                weight: '500'
+                            }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(17, 24, 39, 0.95)',
+                        titleColor: 'white',
+                        bodyColor: 'white',
+                        borderColor: 'rgba(255, 255, 255, 0.2)',
+                        borderWidth: 1,
+                        cornerRadius: 12,
+                        padding: 14,
+                        callbacks: {
+                            label: function(context) {
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = total > 0 ? ((context.parsed / total) * 100).toFixed(1) : 0;
+                                return context.label + ': ' + context.parsed + ' (' + percentage + '%)';
+                            }
+                        }
+                    }
+                },
+                animation: {
+                    duration: 1000,
+                    easing: 'easeOutCubic',
+                    onComplete: function() {
+                        this.options.animation.duration = 0;
+                    }
+                }
+            }
+        };
+
+        setTimeout(() => {
+            try {
+                document.getElementById('pieChartLoading').style.display = 'none';
+                document.getElementById('pieChart').style.display = 'block';
+                new Chart(document.getElementById('pieChart'), pieConfig);
+            } catch (error) {
+                console.error('Erro ao criar gráfico de pizza:', error);
+                document.getElementById('pieChartLoading').innerHTML = '<div class="error-message">Erro ao carregar gráfico de pizza</div>';
+            }
+        }, 500);
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+{% block extrastyle %}
+<link rel="stylesheet" href="{% static 'admin/css/custom-admin.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="admin-dashboard">
+  <aside id="sidebar" class="sidebar expanded">
+    <div class="sidebar-header">
+      <h2>Médico IA</h2>
+      <button id="toggleSidebar">≡</button>
+    </div>
+    <nav>
+      <ul>
+        <li><a href="{% url 'admin:index' %}">🏠 Início</a></li>
+        <li><a href="{% url 'admin:usuarios_usuario_changelist' %}">👤 Usuários</a></li>
+        <li><a href="{% url 'usuarios_estatisticas' %}">📊 Estatísticas</a></li>
+        <li><a href="{% url 'usuarios_relatorio' %}">📋 Relatório</a></li>
+        <li><a href="{% url 'usuarios_dispositivos' %}">📱 Dispositivos</a></li>
+        <li><a href="{% url 'usuarios_configuracoes' %}">⚙️ Configurações</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main class="dashboard-content">
+    <h1 class="dashboard-title">Bem-vindo ao Painel de Administração</h1>
+    <div class="dashboard-widgets">
+      <div class="widget-card">
+        <h3>Total de Usuários</h3>
+        <p>{{ total_usuarios }}</p>
+      </div>
+      <div class="widget-card">
+        <h3>Usuários Ativos</h3>
+        <p>{{ usuarios_ativos }}</p>
+      </div>
+      <div class="widget-card">
+        <h3>Bloqueados</h3>
+        <p>{{ usuarios_bloqueados }}</p>
+      </div>
+      <div class="widget-card">
+        <h3>Novos (30 dias)</h3>
+        <p>{{ novos_usuarios }}</p>
+      </div>
+    </div>
+  </main>
+</div>
+{% endblock %}
+
+{% block extrahead %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const sidebar = document.getElementById('sidebar');
+    const toggle = document.getElementById('toggleSidebar');
+    toggle.addEventListener("click", () => {
+      sidebar.classList.toggle('collapsed');
+    });
+  });
+</script>
+{% endblock %}

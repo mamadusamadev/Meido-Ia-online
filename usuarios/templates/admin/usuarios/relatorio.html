@@ -1,0 +1,95 @@
+
+<!-- templates/admin/usuarios/relatorio.html -->
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+    <a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+    &rsaquo; <a href="{% url 'admin:usuarios_usuario_changelist' %}">Usuários</a>
+    &rsaquo; {{ title }}
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="module">
+    <h1>📋 {{ title }}</h1>
+    
+    <form method="post" style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+        {% csrf_token %}
+        <h3>Filtros do Relatório</h3>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+            <div>
+                <label for="tipo_usuario"><strong>Tipo de Usuário:</strong></label>
+                <select id="tipo_usuario" name="tipo_usuario">
+                    <option value="">Todos</option>
+                    <option value="admin">Administradores</option>
+                    <option value="moderador">Moderadores</option>
+                    <option value="paciente">Pacientes</option>
+                </select>
+            </div>
+            
+            <div>
+                <label for="status"><strong>Status:</strong></label>
+                <select id="status" name="status">
+                    <option value="">Todos</option>
+                    <option value="ativo">Ativos</option>
+                    <option value="inativo">Inativos</option>
+                </select>
+            </div>
+        </div>
+        
+        <div style="margin-top: 15px;">
+            <button type="submit" class="button default">Gerar Relatório</button>
+        </div>
+    </form>
+    
+    <div id="resultado-relatorio" style="margin-top: 20px;"></div>
+    
+    <div style="margin-top: 20px;">
+        <a href="{% url 'admin:usuarios_usuario_changelist' %}" class="button default">
+            ← Voltar para Lista de Usuários
+        </a>
+    </div>
+</div>
+
+<script>
+document.querySelector('form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    fetch('', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        const resultado = document.getElementById('resultado-relatorio');
+        let html = '<div class="module"><h3>Resultado do Relatório</h3>';
+        html += '<table class="table"><thead><tr>';
+        html += '<th>Email</th><th>Tipo</th><th>Status</th><th>Último Login</th><th>Data Criação</th>';
+        html += '</tr></thead><tbody>';
+        
+        data.usuarios.forEach(usuario => {
+            html += '<tr>';
+            html += `<td>${usuario.email}</td>`;
+            html += `<td>${usuario.tipo}</td>`;
+            html += `<td>${usuario.ativo ? 'Ativo' : 'Inativo'}</td>`;
+            html += `<td>${usuario.ultimo_login || 'Nunca'}</td>`;
+            html += `<td>${usuario.created_at}</td>`;
+            html += '</tr>';
+        });
+        
+        html += '</tbody></table></div>';
+        resultado.innerHTML = html;
+    });
+});
+</script>
+{% endblock %}
